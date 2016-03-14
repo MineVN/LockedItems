@@ -1,0 +1,7 @@
+#The locked lore line
+#Warning: if you change this, item with old locked lore won't be checked
+locked: '&6&l[Locked]'
+#commands that can't be used while holding a locked item
+blocked-cmds:
+- command1
+- command2
