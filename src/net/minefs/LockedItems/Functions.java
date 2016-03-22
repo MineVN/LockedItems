@@ -49,6 +49,7 @@ public class Functions {
 				Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
 				p.sendMessage("§c§lYou lost " + i.getItemMeta().getDisplayName()
 						+ " §c§l: this is a locked item with someone else's name on it.");
+				p.getWorld().dropItemNaturally(p.getLocation(), i);
 			} else
 				Functions.removeOwner(i, p.getName());
 		}
@@ -60,6 +61,7 @@ public class Functions {
 				Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
 				p.sendMessage("§c§lYou lost " + i.getItemMeta().getDisplayName()
 						+ " §c§l: this is a locked item with someone else's name on it.");
+				p.getWorld().dropItemNaturally(p.getLocation(), i);
 			} else
 				Functions.removeOwner(i, p.getName());
 			n++;
