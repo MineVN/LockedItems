@@ -1,0 +1,16 @@
+#Item có dòng lore này sẽ bị khóa.
+#Chú ý: Nếu bạn sửa cái này thì những item có lore cũ sẽ không là item khóa
+locked: '&6&l[Không thể giao dịch]'
+#Những command không thể dùng khi đang cầm trong tay item khóa
+blocked-cmds:
+- command1
+- command2
+keep-on-death: false
+block-drop: false
+messages:
+ blocked-command: "&cKhông thể dùng lệnh này khi đang cầm item khóa."
+ must-have-name: "&cItem phải có tên mới khóa được."
+ no-item: "&cBạn không có gì ở trên tay."
+ locked: "&aKhóa thành công."
+ unlocked: "&aBỏ khóa thành công."
+ removed: "&cBạn đã mất %item% &cvì bạn không phải là chủ nhân hợp pháp của nó."

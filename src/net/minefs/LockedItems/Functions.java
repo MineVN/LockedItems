@@ -1,5 +1,10 @@
 package net.minefs.LockedItems;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -43,29 +48,64 @@ public class Functions {
 	}
 
 	public static void checkPlayer(Player p) {
-		for (ItemStack i : p.getInventory().getContents()) {
+		ItemStack[] inventory = p.getInventory().getContents();
+		for (int a = 0; a < inventory.length; a++) {
+			ItemStack i = inventory[a];
+			if (i == null || i.getType().equals(Material.AIR))
+				continue;
 			if (!isOwner(i, p.getName()) && haveOwnerName(i)) {
-				p.getInventory().remove(i);
+				inventory[a] = null;
 				Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
-				p.sendMessage("§c§lYou lost " + i.getItemMeta().getDisplayName()
-						+ " §c§l: this is a locked item with someone else's name on it.");
+				p.sendMessage(Main.removed.replaceAll("%item%", i.getItemMeta().getDisplayName()));
 				p.getWorld().dropItemNaturally(p.getLocation(), i);
-			} else
+			} else {
 				Functions.removeOwner(i, p.getName());
+				inventory[a] = i;
+			}
 		}
+		p.getInventory().setContents(inventory);
+		if (!Main.newversion) {
+			ItemStack[] armor = p.getInventory().getArmorContents();
+			int n = 0;
+			for (ItemStack i : p.getInventory().getArmorContents()) {
+				if (!isOwner(i, p.getName()) && haveOwnerName(i)) {
+					armor[n] = null;
+					Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
+					p.sendMessage(Main.removed.replaceAll("%item%", i.getItemMeta().getDisplayName()));
+					p.getWorld().dropItemNaturally(p.getLocation(), i);
+				} else
+					Functions.removeOwner(i, p.getName());
+				n++;
+			}
+			p.getInventory().setArmorContents(armor);
+		}
+	}
+
+	public static void lockAll(Player p) {
+		for (ItemStack i : p.getInventory().getContents())
+			addOwner(i, p.getName());
 		ItemStack[] armor = p.getInventory().getArmorContents();
-		int n = 0;
-		for (ItemStack i : p.getInventory().getArmorContents()) {
-			if (!isOwner(i, p.getName()) && haveOwnerName(i)) {
-				armor[n]=null;
-				Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
-				p.sendMessage("§c§lYou lost " + i.getItemMeta().getDisplayName()
-						+ " §c§l: this is a locked item with someone else's name on it.");
-				p.getWorld().dropItemNaturally(p.getLocation(), i);
-			} else
-				Functions.removeOwner(i, p.getName());
-			n++;
-		}
+		for (ItemStack i : p.getInventory().getArmorContents())
+			addOwner(i, p.getName());
 		p.getInventory().setArmorContents(armor);
+	}
+
+	public static boolean containsCommand(List<String> commands, String command) {
+		for (String c : commands) {
+			if (c.equalsIgnoreCase(command))
+				return true;
+		}
+		return false;
+	}
+
+	public static boolean haveLockedItems(Player p) {
+		List<ItemStack> c = new ArrayList<ItemStack>(Arrays.asList(p.getInventory().getContents().clone()));
+		List<ItemStack> c2 = new ArrayList<ItemStack>(Arrays.asList(p.getInventory().getArmorContents().clone()));
+		c.addAll(c2);
+		for (ItemStack i : c) {
+			if (!isOwner(i, p.getName()))
+				return true;
+		}
+		return false;
 	}
 }

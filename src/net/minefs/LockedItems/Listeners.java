@@ -1,7 +1,6 @@
 package net.minefs.LockedItems;
 
 import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -24,18 +23,24 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.minefs.DeathDropsAPI.PlayerDeathDropEvent;
 
 public final class Listeners implements Listener {
-	@EventHandler
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void checkClick(InventoryClickEvent e) {
-		ClickType clicktype = e.getClick();
-		if (clicktype.equals(ClickType.NUMBER_KEY)) {
+		if (e.getInventory().getName().toLowerCase().contains("kho hàng") && Functions.isLocked(e.getCurrentItem())) {
 			e.setCancelled(true);
 			return;
 		}
 		InventoryType it = e.getInventory().getType();
+		ClickType clicktype = e.getClick();
+		Player player = (Player) e.getWhoClicked();
+		if (clicktype.equals(ClickType.NUMBER_KEY)
+				|| (Main.nodrop && it.equals(InventoryType.CRAFTING) && e.getSlot() >= 36 && e.getSlot() <= 39)
+						&& player.getInventory().firstEmpty() == -1) {
+			e.setCancelled(true);
+			return;
+		}
 		if (it.equals(InventoryType.CHEST) || it.equals(InventoryType.HOPPER) || it.equals(InventoryType.DROPPER)
 				|| it.equals(InventoryType.DISPENSER) || it.equals(InventoryType.BREWING)
-				|| it.equals(InventoryType.FURNACE)) {
-			Player player = (Player) e.getWhoClicked();
+				|| it.equals(InventoryType.FURNACE) || it.name().equals("SHULKER_BOX")) {
 			if (!player.hasPermission("lockeditems.ignore")) {
 				ItemStack cur = e.getCursor();
 				ItemStack click = e.getCurrentItem();
@@ -43,7 +48,7 @@ public final class Listeners implements Listener {
 					if (Functions.isLocked(click)) {
 						if (!Functions.isOwner(click, player.getName()))
 							e.setCancelled(true);
-						else if (e.isShiftClick() && Functions.haveOwnerName(click))
+						else if (e.isShiftClick() && Functions.haveOwnerName(click) && !e.isCancelled())
 							Functions.removeOwner(click, player.getName());
 					}
 				} else {
@@ -51,7 +56,7 @@ public final class Listeners implements Listener {
 						e.setCancelled(true);
 					else {
 						Functions.addOwner(click, player.getName());
-						if (Functions.isLocked(cur) && Functions.haveOwnerName(cur)) {
+						if (Functions.isLocked(cur) && Functions.haveOwnerName(cur) && !e.isCancelled()) {
 							if (Functions.isOwner(cur, player.getName())) {
 								Functions.removeOwner(cur, player.getName());
 								e.setCancelled(true);
@@ -68,7 +73,8 @@ public final class Listeners implements Listener {
 			ItemStack i = e.getInventory().getItem(1);
 			ItemStack i0 = e.getInventory().getItem(0);
 			ItemStack i2 = e.getInventory().getItem(2);
-			if (Functions.isLocked(i))
+			if (Functions.isLocked(i)
+					&& !(i.getType().equals(Material.BOOK) || i.getType().equals(Material.ENCHANTED_BOOK)))
 				e.setCancelled(true);
 			if (i0 != null && i0.hasItemMeta() && i2 != null && i2.hasItemMeta() && i2.getItemMeta().hasDisplayName()) {
 				String name = i2.getItemMeta().getDisplayName();
@@ -76,6 +82,9 @@ public final class Listeners implements Listener {
 				if ((im.hasDisplayName() && !im.getDisplayName().equals(name)) || (!im.hasDisplayName()))
 					e.setCancelled(true);
 			}
+			if ((Functions.isLocked(i0) && i2 != null && !i2.getType().equals(Material.AIR)
+					&& !i2.getItemMeta().hasDisplayName()) || e.isShiftClick())
+				e.setCancelled(true);
 		}
 	}
 
@@ -91,14 +100,18 @@ public final class Listeners implements Listener {
 		Functions.checkPlayer(p);
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void dropItem(PlayerDropItemEvent e) {
 		ItemStack i = e.getItemDrop().getItemStack();
+		if (Main.nodrop && Functions.isLocked(i)) {
+			e.setCancelled(true);
+			return;
+		}
 		Player p = e.getPlayer();
 		Functions.addOwner(i, p.getName());
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void pickupItem(PlayerPickupItemEvent e) {
 		ItemStack i = e.getItem().getItemStack();
 		Player player = (Player) e.getPlayer();
@@ -110,7 +123,7 @@ public final class Listeners implements Listener {
 			Functions.removeOwner(i, player.getName());
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void itemFrames(PlayerInteractEntityEvent e) {
 		Player p = e.getPlayer();
 		ItemStack i = p.getItemInHand();
@@ -118,21 +131,22 @@ public final class Listeners implements Listener {
 		if (Functions.isLocked(i) && (et instanceof ItemFrame || p.isSneaking()))
 			Functions.addOwner(i, p.getName());
 	}
-	
-	@EventHandler
+
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void armorStand(PlayerInteractAtEntityEvent e) {
 		Player p = e.getPlayer();
 		ItemStack i = p.getItemInHand();
-		Entity et = e.getRightClicked();
-		if (Functions.isLocked(i) && (et instanceof ArmorStand))
+		if (Functions.isLocked(i))
 			Functions.addOwner(i, p.getName());
 	}
-	
-	@EventHandler(priority=EventPriority.MONITOR)
+
+	@EventHandler(ignoreCancelled = true)
 	public void onDeath(PlayerDeathDropEvent e) {
-		if(e.isCancelled())
-			return;
 		ItemStack i = e.getItem();
+		if (Main.keep && Functions.isLocked(i)) {
+			e.setCancelled(true);
+			return;
+		}
 		Player p = e.getPlayer();
 		if (Functions.isLocked(i) && !Functions.haveOwnerName(i) && !e.isCancelled()) {
 			Functions.addOwner(i, p.getName());
@@ -147,9 +161,9 @@ public final class Listeners implements Listener {
 		if (i == null || i.getType().equals(Material.AIR) || !Functions.isLocked(i))
 			return;
 		String command = e.getMessage().substring(1).split(" ")[0];
-		if (Main.blockedcmds.contains(command)) {
+		if (Functions.containsCommand(Main.blockedcmds, command) || command.contains(":")) {
 			e.setCancelled(true);
-			p.sendMessage("§cYou can't use this command while holding a locked item.");
+			p.sendMessage(Main.blockedcmd);
 		}
 	}
 }
