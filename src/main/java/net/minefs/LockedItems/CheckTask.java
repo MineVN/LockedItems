@@ -8,7 +8,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class CheckTask extends BukkitRunnable {
 
-	private Main main;
+	private final Main main;
 
 	public CheckTask(Main main) {
 		this.main = main;
@@ -19,12 +19,7 @@ public class CheckTask extends BukkitRunnable {
 	public void run() {
 		for (Player p : new ArrayList<Player>(Bukkit.getOnlinePlayers())) {
 			if (!p.hasPermission("lockeditems.ignore") && Functions.haveLockedItems(p))
-				Bukkit.getScheduler().runTask(main, new Runnable() {
-					@Override
-					public void run() {
-						Functions.checkPlayer(p);
-					}
-				});
+				Bukkit.getScheduler().runTask(main, () -> Functions.checkPlayer(p));
 		}
 	}
 }

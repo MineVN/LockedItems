@@ -1,0 +1,17 @@
+name: LockedItems
+version: 3.4
+main: net.minefs.LockedItems.Main
+author: MasterClaus
+depend: [DeathDropsAPI]
+softdepend: [Trading, ASkyBlock]
+commands:
+ lockeditems:
+  description: /<command> [reload]
+  permission: lockeditems.admin
+  aliases: [li, khoa, lock, lockitem]
+permissions:
+ lockeditems.*:
+  default: op
+  children:
+   lockeditems.admin: true
+   lockeditems.ignore: true

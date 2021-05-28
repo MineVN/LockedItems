@@ -1,8 +1,5 @@
 package net.minefs.LockedItems;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -12,14 +9,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import net.spectralcraft.dev.Trading.Trading;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Main extends JavaPlugin {
 	public static boolean keep, nodrop, newversion = false;
 	public static List<String> blockedcmds;
 	public static String lockedstring, blockedcmd, musthavename, noitem, locked, unlocked, removed;
 	public static Plugin li;
-	public static Trading trading = null;
 
 	@Override
 	public void onEnable() {
@@ -32,7 +30,6 @@ public class Main extends JavaPlugin {
 		loadConfig();
 		li = this;
 		getServer().getPluginManager().registerEvents(new Listeners(), this);
-		trading = (Trading) getServer().getPluginManager().getPlugin("Trading");
 		new CheckTask(this);
 	}
 
@@ -53,7 +50,7 @@ public class Main extends JavaPlugin {
 				return true;
 			}
 			Player p = (Player) sender;
-			ItemStack i = p.getItemInHand();
+			ItemStack i = p.getInventory().getItemInMainHand();
 			if (i == null || i.getType().equals(Material.AIR)) {
 				p.sendMessage(noitem);
 				return true;

@@ -1,0 +1,16 @@
+#Item with this lore line will be locked
+#Notice: If you change this, the plugin won't lock items that has old "locked" lore line
+locked: '&6&l[Locked]'
+#Commands that can't be used while holding a locked item
+blocked-cmds:
+- command1
+- command2
+keep-on-death: false
+block-drop: false
+messages:
+ blocked-command: "&cYou can't use this command while using a locked item!"
+ must-have-name: "&cItem must have a name to be locked."
+ no-item: "&cYou have nothing on your hand."
+ locked: "&aLocked."
+ unlocked: "&aUnlocked."
+ removed: "%item% &cis removed from your inventory because you are not the legal owner."
