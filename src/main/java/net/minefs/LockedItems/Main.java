@@ -12,7 +12,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Main extends JavaPlugin {
 	public static boolean keep, nodrop, newversion = false;
 	public static List<String> blockedcmds;
@@ -90,5 +89,4 @@ public class Main extends JavaPlugin {
 		removed = getConfig().getString("messages.removed").replace("&", "§");
 		musthavename = getConfig().getString("messages.must-have-name").replace("&", "§");
 	}
-
 }
