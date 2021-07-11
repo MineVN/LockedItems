@@ -128,6 +128,7 @@ public final class Listeners implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void pickupItem(EntityPickupItemEvent e) {
+        if (!(e.getEntity() instanceof Player)) return;
         ItemStack i = e.getItem().getItemStack();
         Player player = (Player) e.getEntity();
         if (player.hasPermission("lockeditems.ignore"))
