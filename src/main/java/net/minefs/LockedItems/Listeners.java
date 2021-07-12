@@ -229,43 +229,12 @@ public final class Listeners implements Listener {
             e.setCancelled(true);
             return;
         }
-        InventoryType it = e.getInventory().getType();
         Player player = (Player) e.getWhoClicked();
         if (!player.hasPermission("lockeditems.ignore")) {
             ItemStack cur = e.getOldCursor();
             ItemStack newCur = e.getCursor();
-            if (!Functions.haveOwnerName(cur)) {
+            if (Functions.isLocked(cur)||Functions.isLocked(newCur)) {
                 e.setCancelled(true);
-                return;
-            }
-            if (Functions.isLocked(cur)) {
-                e.setCancelled(true);
-                return;
-            }
-            if (Functions.isLocked(newCur)) {
-                e.setCancelled(true);
-                    /*if (!Functions.isOwner(cur, player.getName())) e.setCancelled(true);
-                    else if (Functions.haveOwnerName(cur) && !e.isCancelled()) {
-                        Functions.removeOwner(cur, player.getName());
-                        //e.setCancelled(true);
-                        player.setItemOnCursor(click);
-                        player.getInventory().setItem(e.getSlot(), cur);
-                        player.updateInventory();
-                    }
-                    for (Map.Entry<Integer,ItemStack> entry : e.getNewItems().entrySet()) {
-                        if (!Functions.haveOwnerName(entry.getValue())) {
-                            e.setCancelled(true);
-                        }
-                    }
-                    Functions.addOwner(entry.getValue(), player.getName());
-                    player.getOpenInventory().getTopInventory().setItem(entry.getKey(), entry.getValue());
-                    player.updateInventory();
-                    player.sendMessage(String.valueOf(cur.getAmount()));
-                    if (e.isCancelled()) player.setItemOnCursor(e.getCursor());
-
-                        if (!e.isCancelled()) player.setItemOnCursor(click);
-                        player.getOpenInventory().getTopInventory().setItem(e.getSlot(), cur);
-                        */
             }
         }
     }
