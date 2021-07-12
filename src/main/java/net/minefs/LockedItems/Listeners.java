@@ -1,7 +1,10 @@
 package net.minefs.LockedItems;
 
 import net.minefs.DeathDropsAPI.PlayerDeathDropEvent;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -9,10 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -36,43 +36,64 @@ public final class Listeners implements Listener {
             if (!player.hasPermission("lockeditems.ignore")) {
                 ItemStack cur = e.getCursor();
                 ItemStack click = e.getCurrentItem();
-                if (Functions.isLocked(click) && clicktype.isShiftClick()) {
-                    if (Objects.equals(e.getClickedInventory(), player.getOpenInventory().getBottomInventory())) {
-                        Functions.addOwner(click, player.getName());
-                        player.getOpenInventory().getBottomInventory().setItem(e.getSlot(), null);
-                        player.getOpenInventory().getTopInventory().addItem(click);
-                        player.updateInventory();
+                if (click==null||cur==null) return;
+                String iName = click.hasItemMeta() ? click.getItemMeta().getDisplayName() : click.getType().name(),
+                        curName = cur.hasItemMeta() ? cur.getItemMeta().getDisplayName() : cur.getType().name();
+
+                Location loc = player.getLocation();
+                int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
+                World world = loc.getWorld();
+                String worldName = world != null ? world.getName() : "không xác định";
+                String suffix = " at " + x + "," + y + "," + z + "," + worldName;
+
+                int amount = click.getAmount(), curAmount = cur.getAmount();
+                if (e.getClickedInventory() != null) {
+                    if (clicktype.equals(ClickType.NUMBER_KEY) || (Main.nodrop && e.getSlot() >= 36
+                            && e.getSlot() <= 39) && player.getInventory().firstEmpty() == -1) {
                         e.setCancelled(true);
-                        return;
                     }
-                    if (Objects.equals(e.getClickedInventory(), player.getOpenInventory().getTopInventory())) {
-                        Functions.removeOwner(click, player.getName());
-                        player.getOpenInventory().getTopInventory().setItem(e.getSlot(), null);
-                        player.getOpenInventory().getBottomInventory().addItem(click);
-                        player.updateInventory();
-                        e.setCancelled(true);
-                        return;
-                    }
-                }
-                if (e.getClickedInventory() != null && e.getRawSlot() < e.getInventory().getSize()) {
                     if (Functions.isLocked(click)) {
-                        if (clicktype.equals(ClickType.NUMBER_KEY) || (Main.nodrop && e.getSlot() >= 36
-                                && e.getSlot() <= 39) && player.getInventory().firstEmpty() == -1) {
+                        if (Objects.equals(e.getClickedInventory(), player.getOpenInventory().getBottomInventory())) {
+                            Functions.addOwner(click, player.getName());
+                            player.getOpenInventory().getBottomInventory().setItem(e.getSlot(), null);
+                            player.getOpenInventory().getTopInventory().addItem(click);
+                            player.updateInventory();
                             e.setCancelled(true);
+                            return;
                         }
-                        if (!Functions.isOwner(click, player.getName())) e.setCancelled(true);
-                        else if (Functions.haveOwnerName(click) && !e.isCancelled())
-                            Functions.removeOwner(click, player.getName());
+                        if (Objects.equals(e.getClickedInventory(), player.getOpenInventory().getTopInventory())) {
+                            if (!Functions.haveOwnerName(click) || !Functions.isOwner(click, player.getName())) {
+                                Main.getPlugin(Main.class).getLogger().warning(player.getName() + " is trying to get " +
+                                        "locked item: " + iName + "§e x" + amount + suffix);
+                                player.sendMessage("§cKhông phải đồ của bạn!");
+                                e.setCancelled(true);
+                                return;
+                            }
+                            if (Functions.isOwner(click, player.getName())) {
+                                Functions.removeOwner(click, player.getName());
+                                player.getOpenInventory().getTopInventory().setItem(e.getSlot(), null);
+                                player.getOpenInventory().getBottomInventory().addItem(click);
+                                player.updateInventory();
+                                e.setCancelled(true);
+                                Main.getPlugin(Main.class).getLogger().warning(player.getName() + " got " +
+                                        "locked item: " + iName + "§e x" + amount + suffix);
+                                return;
+                            }
+                        }
                     }
                     if (Functions.isLocked(cur)) {
-                        if (!Functions.isOwner(cur, player.getName()))
+                        if (!Functions.isOwner(cur, player.getName())) {
                             e.setCancelled(true);
-                        else if (Functions.haveOwnerName(cur) && !e.isCancelled()) {
+                            Main.getPlugin(Main.class).getLogger().warning(player.getName() + " is trying to get " +
+                                    "locked item: " + curName + "§e x" + curAmount + suffix);
+                        } else if (Functions.haveOwnerName(cur) && !e.isCancelled()) {
                             Functions.removeOwner(cur, player.getName());
                             e.setCancelled(true);
                             player.setItemOnCursor(click);
                             player.getInventory().setItem(e.getSlot(), cur);
                             player.updateInventory();
+                            Main.getPlugin(Main.class).getLogger().warning(player.getName() + " got " +
+                                    "locked item: " + curName + "§e x" + curAmount + suffix);
                         }
                         if (!Functions.haveOwnerName(cur)) {
                             Functions.addOwner(cur, player.getName());
@@ -128,15 +149,16 @@ public final class Listeners implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void pickupItem(EntityPickupItemEvent e) {
-        if (!(e.getEntity() instanceof Player)) return;
-        ItemStack i = e.getItem().getItemStack();
-        Player player = (Player) e.getEntity();
-        if (player.hasPermission("lockeditems.ignore"))
-            return;
-        if (!Functions.isOwner(i, player.getName()) && Functions.isLocked(i))
-            e.setCancelled(true);
-        else
-            Functions.removeOwner(i, player.getName());
+        if (e.getEntity() instanceof Player) {
+            ItemStack i = e.getItem().getItemStack();
+            Player player = (Player) e.getEntity();
+            if (player.hasPermission("lockeditems.ignore"))
+                return;
+            if (!Functions.isOwner(i, player.getName()) && Functions.isLocked(i))
+                e.setCancelled(true);
+            else
+                Functions.removeOwner(i, player.getName());
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -152,8 +174,20 @@ public final class Listeners implements Listener {
     public void armorStand(PlayerInteractAtEntityEvent e) {
         Player p = e.getPlayer();
         ItemStack i = p.getInventory().getItemInMainHand();
-        if (Functions.isLocked(i))
+        Entity et = e.getRightClicked();
+        if (Functions.isLocked(i) && et instanceof ArmorStand)
             Functions.addOwner(i, p.getName());
+    }
+
+    @EventHandler
+    public void onEquipArmorStand(PlayerArmorStandManipulateEvent e) {
+        Player player = e.getPlayer();
+        ItemStack i = e.getArmorStandItem();
+        if (!Functions.isOwner(i, player.getName())) {
+            e.setCancelled(true);
+            player.sendMessage("§cKhông phải đồ của bạn!");
+        }
+
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -180,6 +214,59 @@ public final class Listeners implements Listener {
         if (Functions.containsCommand(Main.blockedcmds, command) || command.contains(":")) {
             e.setCancelled(true);
             p.sendMessage(Main.blockedcmd);
+        }
+    }
+
+    @EventHandler
+    public void onHeldItem(PlayerItemHeldEvent e) {
+        Player player = e.getPlayer();
+        Functions.checkPlayer(player);
+    }
+
+    @EventHandler
+    public void onDragItem(InventoryDragEvent e) {
+        if (e.getView().getTitle().toLowerCase().contains("kho hàng") && Functions.isLocked(e.getCursor())) {
+            e.setCancelled(true);
+            return;
+        }
+        InventoryType it = e.getInventory().getType();
+        Player player = (Player) e.getWhoClicked();
+        if (!player.hasPermission("lockeditems.ignore")) {
+            ItemStack cur = e.getOldCursor();
+            ItemStack newCur = e.getCursor();
+            if (!Functions.haveOwnerName(cur)) {
+                e.setCancelled(true);
+                return;
+            }
+            if (Functions.isLocked(cur)) {
+                e.setCancelled(true);
+                return;
+            }
+            if (Functions.isLocked(newCur)) {
+                e.setCancelled(true);
+                    /*if (!Functions.isOwner(cur, player.getName())) e.setCancelled(true);
+                    else if (Functions.haveOwnerName(cur) && !e.isCancelled()) {
+                        Functions.removeOwner(cur, player.getName());
+                        //e.setCancelled(true);
+                        player.setItemOnCursor(click);
+                        player.getInventory().setItem(e.getSlot(), cur);
+                        player.updateInventory();
+                    }
+                    for (Map.Entry<Integer,ItemStack> entry : e.getNewItems().entrySet()) {
+                        if (!Functions.haveOwnerName(entry.getValue())) {
+                            e.setCancelled(true);
+                        }
+                    }
+                    Functions.addOwner(entry.getValue(), player.getName());
+                    player.getOpenInventory().getTopInventory().setItem(entry.getKey(), entry.getValue());
+                    player.updateInventory();
+                    player.sendMessage(String.valueOf(cur.getAmount()));
+                    if (e.isCancelled()) player.setItemOnCursor(e.getCursor());
+
+                        if (!e.isCancelled()) player.setItemOnCursor(click);
+                        player.getOpenInventory().getTopInventory().setItem(e.getSlot(), cur);
+                        */
+            }
         }
     }
 }
