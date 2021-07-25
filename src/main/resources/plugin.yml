@@ -9,7 +9,7 @@ commands:
  lockeditems:
   description: /<command> [reload]
   permission: lockeditems.admin
-  aliases: [li, khoa, lock, lockitem]
+  aliases: [li, khoa, lockitem]
 permissions:
  lockeditems.*:
   default: op

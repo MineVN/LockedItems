@@ -8,12 +8,14 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.minecart.StorageMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -29,10 +31,7 @@ public final class Listeners implements Listener {
         InventoryType it = e.getInventory().getType();
         ClickType clicktype = e.getClick();
         Player player = (Player) e.getWhoClicked();
-        if (it.equals(InventoryType.CHEST) || it.equals(InventoryType.HOPPER) || it.equals(InventoryType.DROPPER)
-                || it.equals(InventoryType.DISPENSER) || it.equals(InventoryType.BREWING)
-                || it.equals(InventoryType.FURNACE) || it.equals(InventoryType.SHULKER_BOX)
-                || it.equals(InventoryType.BARREL) || it.equals(InventoryType.SMOKER)) {
+        if (isContainer(e.getInventory())) {
             if (!player.hasPermission("lockeditems.ignore")) {
                 ItemStack cur = e.getCursor();
                 ItemStack click = e.getCurrentItem();
@@ -237,5 +236,14 @@ public final class Listeners implements Listener {
                 e.setCancelled(true);
             }
         }
+    }
+
+    private boolean isContainer(Inventory inv){
+        InventoryType it = inv.getType();
+        return it.equals(InventoryType.CHEST) || it.equals(InventoryType.HOPPER) || it.equals(InventoryType.DROPPER)
+                || it.equals(InventoryType.DISPENSER) || it.equals(InventoryType.BREWING)
+                || it.equals(InventoryType.FURNACE) || it.equals(InventoryType.SHULKER_BOX)
+                || it.equals(InventoryType.BARREL) || it.equals(InventoryType.SMOKER)
+                || inv instanceof StorageMinecart;
     }
 }
