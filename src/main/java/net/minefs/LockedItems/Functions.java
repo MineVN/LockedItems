@@ -8,6 +8,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Functions {
     public static boolean isLocked(ItemStack i) {
@@ -49,10 +50,10 @@ public class Functions {
 
     public static void checkPlayer(Player p) {
         ItemStack[] inventory = p.getInventory().getContents();
-        for (int a = 0; a < inventory.length; a++) {
+        IntStream.range(0, inventory.length).forEach(a -> {
             ItemStack i = inventory[a];
             if (i == null || i.getType().equals(Material.AIR))
-                continue;
+                return;
             if (!isOwner(i, p.getName()) && haveOwnerName(i)) {
                 inventory[a] = null;
                 Main.li.getLogger().info(p.getName() + " lost " + i.getItemMeta().getDisplayName());
@@ -62,7 +63,7 @@ public class Functions {
                 Functions.removeOwner(i, p.getName());
                 inventory[a] = i;
             }
-        }
+        });
         p.getInventory().setContents(inventory);
         if (!Main.newversion) {
             ItemStack[] armor = p.getInventory().getArmorContents();
